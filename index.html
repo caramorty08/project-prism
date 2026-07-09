@@ -19,11 +19,24 @@
     var el = document.getElementById('__diag');
     if (el) { el.style.display = 'block'; el.innerHTML = html; }
   }
+  function appAlreadyLoaded() {
+    var root = document.getElementById('root');
+    return !!(root && root.hasChildNodes());
+  }
   window.addEventListener('error', function(e) {
+    if (appAlreadyLoaded()) { console.error('Background error (ignored, app already loaded):', e.message); return; }
     showDiag('<h2 style="color:#B5503F">Something went wrong</h2>' +
       '<p><b>Error:</b> ' + (e.message || 'unknown error') + '</p>' +
       '<p>This usually means this computer/network is blocking a required file, or there is a bug in the code. Try opening this same file on a different network (e.g. a phone hotspot) to check. If it still fails, copy this exact message back to Claude.</p>' +
       '<p style="font-size:12px;color:#746B7E">' + (e.filename ? (e.filename + ':' + e.lineno) : '') + '</p>');
+  });
+  window.addEventListener('unhandledrejection', function(e) {
+    if (appAlreadyLoaded()) { console.error('Background promise rejection (ignored, app already loaded):', e.reason); return; }
+    var reason = e.reason;
+    var msg = (reason && (reason.message || reason.code)) ? (reason.message || reason.code) : String(reason);
+    showDiag('<h2 style="color:#B5503F">Something went wrong (background task)</h2>' +
+      '<p><b>Error:</b> ' + msg + '</p>' +
+      '<p>This usually comes from the sign-in or cloud-save step. Copy this exact message back to Claude.</p>');
   });
   window.__libError = null;
   setTimeout(function() {
@@ -41,14 +54,14 @@
   }, 6000);
 })();
 </script>
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" onerror="window.__libError='React did not load from unpkg.com'"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" onerror="window.__libError='ReactDOM did not load from unpkg.com'"></script>
-<script src="https://unpkg.com/@babel/standalone@7/babel.min.js" onerror="window.__libError='Babel did not load from unpkg.com'"></script>
-<script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script crossorigin="anonymous" src="https://unpkg.com/react@18/umd/react.production.min.js" onerror="window.__libError='React did not load from unpkg.com'"></script>
+<script crossorigin="anonymous" src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" onerror="window.__libError='ReactDOM did not load from unpkg.com'"></script>
+<script crossorigin="anonymous" src="https://unpkg.com/@babel/standalone@7/babel.min.js" onerror="window.__libError='Babel did not load from unpkg.com'"></script>
+<script crossorigin="anonymous" src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script crossorigin="anonymous" src="https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script crossorigin="anonymous" src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect, useCallback } = React;
 
