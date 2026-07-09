@@ -491,11 +491,14 @@ function mapRowToProfile(row) {
 async function storageGetJSON(key, fallback) {
   try {
     const snap = await db.collection("prismData").doc(key).get();
+    window.__cloudReadFailed = false;
     if (!snap.exists) return fallback;
     const data = snap.data();
     return data && Object.prototype.hasOwnProperty.call(data, "value") ? data.value : fallback;
   } catch (e) {
     console.error("Cloud read failed for", key, e);
+    window.__cloudReadFailed = true;
+    window.__cloudReadFailedMessage = (e && e.message) ? e.message : String(e);
     return fallback;
   }
 }
@@ -1996,6 +1999,7 @@ function App({ onSignOut }) {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingForm, setSavingForm] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -2003,6 +2007,9 @@ function App({ onSignOut }) {
       const s = await storageGetJSON(KEYS.sessions, []);
       const c = await storageGetJSON(KEYS.collective, []);
       const st = await storageGetJSON(KEYS.staff, []);
+      if (window.__cloudReadFailed) {
+        setLoadError(window.__cloudReadFailedMessage || "Couldn't reach the cloud database.");
+      }
       setRoster(r);
       setSessions(s);
       setCollective(c);
@@ -2244,6 +2251,8 @@ function App({ onSignOut }) {
           --sidebar-bg: #F1E9FB; --sidebar-ink: #4A2B70; --sidebar-line: rgba(74,43,112,0.16);
         }
         * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; height: 100%; }
+        #root { min-height: 100%; }
         .app-root { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; display: flex; }
         .mono { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); }
         .muted { color: var(--ink-soft); }
@@ -2397,6 +2406,14 @@ function App({ onSignOut }) {
       />
 
       <div className="main-area">
+        {loadError && (
+          <div style={{ background: "var(--brick-bg)", border: "1px solid var(--brick)", color: "var(--brick)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+            <strong>Couldn't load your data from the cloud.</strong> This computer or network may be blocking the connection
+            (common on locked-down work networks/firewalls) — what you're seeing below may be incomplete or empty rather than your real register.
+            Try a different network (e.g. a phone hotspot) to check, or ask IT to allow access to firestore.googleapis.com.
+            <div style={{ fontSize: 12, marginTop: 6, opacity: 0.8 }}>{loadError}</div>
+          </div>
+        )}
         {loading ? (
           <div className="empty-state"><Loader2 className="spin" size={20} /> Loading register…</div>
         ) : view === "welcome" ? (
